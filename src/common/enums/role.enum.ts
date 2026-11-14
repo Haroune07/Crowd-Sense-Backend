@@ -1,5 +1,4 @@
-export enum UserRole {
-  PROTESTER = 'protester',
-  MEDIC = 'medic',
+export enum ManifestationRole {
   ORGANIZER = 'organizer',
+  MANIFESTER = 'manifester',
 }

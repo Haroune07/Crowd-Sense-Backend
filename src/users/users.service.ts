@@ -7,7 +7,6 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
 import { CreateUserDto } from './dto/create-user.dto';
-import { UpdateRoleDto } from './dto/update-role.dto';
 
 @Injectable()
 export class UsersService {
@@ -49,10 +48,5 @@ export class UsersService {
       user = await this.usersRepository.save(user);
     }
     return user;
-  }
-
-  async updateRole(id: string, updateRoleDto: UpdateRoleDto): Promise<User> {
-    // TODO: Implement updating user role (protester | medic | organizer)
-    throw new NotImplementedException('UsersService.updateRole not implemented');
   }
 }

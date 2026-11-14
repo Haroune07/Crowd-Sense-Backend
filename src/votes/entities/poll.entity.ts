@@ -11,6 +11,9 @@ export class Poll {
   id: string;
 
   @Column()
+  manifestationId: string;
+
+  @Column()
   question: string;
 
   @Column('simple-json')

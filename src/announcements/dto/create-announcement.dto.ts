@@ -9,10 +9,13 @@ import {
 import { AnnouncementSeverity } from '../entities/announcement.entity';
 
 export class CreateAnnouncementDto {
-  @ApiPropertyOptional({ example: 'organizer-uuid-1' })
-  @IsOptional()
+  @ApiProperty({
+    example: 'manifestation-uuid-123',
+    description: 'The protest/manifestation this announcement belongs to',
+  })
   @IsString()
-  authorId?: string;
+  @IsNotEmpty()
+  manifestationId: string;
 
   @ApiProperty({ example: 'Route Change - Avoid Main Blvd' })
   @IsString()
@@ -20,7 +23,7 @@ export class CreateAnnouncementDto {
   title: string;
 
   @ApiProperty({
-    example: 'Barricades ahead. Medics stationed at West Park entrance.',
+    example: 'Barricades ahead. Meet at West Park entrance.',
   })
   @IsString()
   @IsNotEmpty()

@@ -16,6 +16,9 @@ export class Report {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
+  @Column()
+  manifestationId: string;
+
   @Column({ nullable: true })
   userId: string;
 
