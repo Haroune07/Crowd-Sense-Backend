@@ -59,7 +59,6 @@ export class ManifestationsService {
     const accessToken = await this.authService.signTokenForUser(updatedUser);
 
     return {
-      ...saved,
       manifestation: saved,
       accessToken,
       user: updatedUser,
@@ -97,7 +96,6 @@ export class ManifestationsService {
     }
 
     return {
-      ...responseManifestation,
       manifestation: responseManifestation,
       accessToken,
       user: updatedUser,

@@ -26,14 +26,14 @@ export class CreateReportDto {
   lng: number;
 
   @ApiProperty({
-    example: 4,
-    description: 'Dangerosity level (1 = calm, 2 = tense, 3 = heated, 4 = danger)',
+    example: 5,
+    description: 'Dangerosity level (1 = calm/peaceful, 5 = urgent danger)',
     minimum: 1,
-    maximum: 4,
+    maximum: 5,
   })
   @IsInt()
   @Min(1)
-  @Max(4)
+  @Max(5)
   dangerLevel: number;
 
   @ApiPropertyOptional({ example: 'Tear gas deployed near the North square' })

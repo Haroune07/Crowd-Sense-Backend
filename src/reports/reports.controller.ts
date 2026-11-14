@@ -53,7 +53,7 @@ export class ReportsController {
         userId: { type: 'string' },
         lat: { type: 'number', example: 45.551 },
         lng: { type: 'number', example: -73.549 },
-        dangerLevel: { type: 'integer', minimum: 1, maximum: 4, example: 4 },
+        dangerLevel: { type: 'integer', minimum: 1, maximum: 5, example: 5 },
         description: { type: 'string' },
         photo: { type: 'string', format: 'binary' },
       },

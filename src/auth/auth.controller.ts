@@ -10,6 +10,7 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('Auth (JWT)')
@@ -27,11 +28,17 @@ export class AuthController {
   }
 
   @Post('login')
-  @ApiOperation({
-    summary: 'Authenticate user with email/password and issue a JWT',
-  })
+  @ApiOperation({ summary: 'Authenticate user with email/password and issue a JWT' })
   login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
+  }
+
+  @Post('google')
+  @ApiOperation({
+    summary: 'Verify Google ID token from React and issue a Crowd-Sense JWT',
+  })
+  googleLogin(@Body() googleLoginDto: GoogleLoginDto) {
+    return this.authService.googleLogin(googleLoginDto.idToken);
   }
 
   @Get('me')

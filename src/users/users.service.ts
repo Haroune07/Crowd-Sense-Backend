@@ -86,4 +86,20 @@ export class UsersService {
     user.role = role;
     return this.usersRepository.save(user);
   }
+
+  async findOrCreateGoogleUser(data: {
+    email: string;
+    displayName: string;
+  }): Promise<User> {
+    let user = await this.findByEmail(data.email);
+    if (!user) {
+      user = this.usersRepository.create({
+        email: data.email.toLowerCase(),
+        displayName: data.displayName,
+        role: UserRole.PROTESTER,
+      });
+      user = await this.usersRepository.save(user);
+    }
+    return user;
+  }
 }
