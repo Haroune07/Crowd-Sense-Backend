@@ -21,10 +21,17 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('Crowd-Sense API')
     .setDescription(
-      'Backend API for CÉGEP student manifestations: MIO token-based join, protest-scoped HeatMap/Urgence reports, announcements, and polls.',
+      'Backend API for protest safety heatmap, urgency photo reports, announcements, roles, manifestations, and polls.',
     )
     .setVersion('1.0')
     .addBearerAuth()
+    .addGlobalParameters({
+      name: 'x-user-role',
+      in: 'header',
+      required: false,
+      description:
+        'Dev fallback role header (protester | medic | organizer) when no Bearer JWT is sent',
+    })
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

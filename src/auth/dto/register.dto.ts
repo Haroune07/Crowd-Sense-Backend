@@ -1,5 +1,13 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, IsString, MinLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
+import {
+  IsEmail,
+  IsEnum,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+  MinLength,
+} from 'class-validator';
+import { UserRole } from '../../common/enums/role.enum';
 
 export class RegisterDto {
   @ApiProperty({ example: 'Anon-42' })
@@ -7,7 +15,7 @@ export class RegisterDto {
   @IsNotEmpty()
   displayName: string;
 
-  @ApiProperty({ example: 'student@cegep.qc.ca' })
+  @ApiProperty({ example: 'protester@crowdsense.org' })
   @IsEmail()
   email: string;
 
@@ -15,4 +23,14 @@ export class RegisterDto {
   @IsString()
   @MinLength(6)
   password: string;
+
+  @ApiPropertyOptional({
+    enum: UserRole,
+    default: UserRole.PROTESTER,
+    description:
+      'Ignored on registration — users always register as protester and become organizer by creating a protest',
+  })
+  @IsOptional()
+  @IsEnum(UserRole)
+  role?: UserRole;
 }

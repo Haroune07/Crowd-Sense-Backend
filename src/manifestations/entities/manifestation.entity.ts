@@ -11,25 +11,28 @@ export class Manifestation {
   id: string;
 
   @Column()
-  title: string;
-
-  @Column()
-  cegep: string;
+  name: string;
 
   @Column('text', { nullable: true })
   description: string;
 
+  @Column()
+  startsAt: Date;
+
+  @Column('float')
+  meetingLat: number;
+
+  @Column('float')
+  meetingLng: number;
+
   /**
-   * Token shared via MIO on Omnivox so students can join this manifestation
+   * 6-character alphanumeric code shared via MIO / Omnivox
    */
   @Column({ unique: true })
-  joinToken: string;
+  code: string;
 
   @Column()
-  createdById: string;
-
-  @Column({ default: true })
-  isActive: boolean;
+  organizerId: string;
 
   @CreateDateColumn()
   createdAt: Date;

@@ -2,12 +2,9 @@ import {
   Controller,
   Get,
   Post,
-  Delete,
-  Param,
   Body,
   Req,
   UseGuards,
-  NotImplementedException,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ManifestationsService } from './manifestations.service';
@@ -15,7 +12,7 @@ import { CreateManifestationDto } from './dto/create-manifestation.dto';
 import { JoinManifestationDto } from './dto/join-manifestation.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 
-@ApiTags('Manifestations (CÉGEP Protests & MIO Join Token)')
+@ApiTags('Manifestations (Create / Join / Leave Protest)')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard)
 @Controller('manifestations')
@@ -25,73 +22,45 @@ export class ManifestationsController {
   @Post()
   @ApiOperation({
     summary:
-      'Create a new manifestation (anyone can create and become its organizer; generates MIO joinToken)',
+      'Create a protest (generates 6-char code, sets role to organizer, returns protest + new accessToken)',
   })
   create(
     @Req() req: any,
     @Body() createManifestationDto: CreateManifestationDto,
   ) {
-    // TODO: Wire up to manifestationsService.create(req.user.userId, createManifestationDto)
-    throw new NotImplementedException(
-      'POST /api/manifestations not implemented',
+    return this.manifestationsService.create(
+      req.user.userId,
+      createManifestationDto,
     );
   }
 
   @Post('join')
   @ApiOperation({
     summary:
-      'Join a manifestation using the MIO/Omnivox token (adds user as manifester)',
+      'Join a protest with a 6-char code (sets role to protester and manifestationId, returns protest + new accessToken)',
   })
-  joinByToken(
-    @Req() req: any,
-    @Body() joinManifestationDto: JoinManifestationDto,
-  ) {
-    // TODO: Wire up to manifestationsService.joinByToken(req.user.userId, joinManifestationDto)
-    throw new NotImplementedException(
-      'POST /api/manifestations/join not implemented',
+  join(@Req() req: any, @Body() joinManifestationDto: JoinManifestationDto) {
+    return this.manifestationsService.join(
+      req.user.userId,
+      joinManifestationDto,
     );
   }
 
-  @Get('mine')
+  @Get('current')
   @ApiOperation({
     summary:
-      'List ONLY the manifestations the current user belongs to (as organizer or manifester)',
+      "Get the logged-in user's current protest (organizers also receive the join code)",
   })
-  findMine(@Req() req: any) {
-    // TODO: Wire up to manifestationsService.findUserManifestations(req.user.userId)
-    throw new NotImplementedException(
-      'GET /api/manifestations/mine not implemented',
-    );
+  getCurrent(@Req() req: any) {
+    return this.manifestationsService.getCurrent(req.user.userId);
   }
 
-  @Get(':id')
+  @Post('leave')
   @ApiOperation({
-    summary: 'Get details of a manifestation (must belong to the protest)',
+    summary:
+      'Leave current protest (clears manifestationId, resets role to protester, returns fresh accessToken)',
   })
-  findOne(@Param('id') id: string, @Req() req: any) {
-    // TODO: Wire up to manifestationsService.findOneForMember(id, req.user.userId)
-    throw new NotImplementedException(
-      'GET /api/manifestations/:id not implemented',
-    );
-  }
-
-  @Delete(':id/leave')
-  @ApiOperation({ summary: 'Leave a manifestation / protest' })
-  leave(@Param('id') id: string, @Req() req: any) {
-    // TODO: Wire up to manifestationsService.leave(id, req.user.userId)
-    throw new NotImplementedException(
-      'DELETE /api/manifestations/:id/leave not implemented',
-    );
-  }
-
-  @Delete(':id')
-  @ApiOperation({
-    summary: 'Delete a manifestation (ONLY the organizer of this protest)',
-  })
-  remove(@Param('id') id: string, @Req() req: any) {
-    // TODO: Wire up to manifestationsService.remove(id, req.user.userId)
-    throw new NotImplementedException(
-      'DELETE /api/manifestations/:id not implemented',
-    );
+  leave(@Req() req: any) {
+    return this.manifestationsService.leave(req.user.userId);
   }
 }

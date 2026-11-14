@@ -8,6 +8,7 @@ import { ManifestationsModule } from './manifestations/manifestations.module';
 import { ReportsModule } from './reports/reports.module';
 import { AnnouncementsModule } from './announcements/announcements.module';
 import { VotesModule } from './votes/votes.module';
+import { SeedModule } from './seed/seed.module';
 
 @Module({
   imports: [
@@ -27,6 +28,7 @@ import { VotesModule } from './votes/votes.module';
     ReportsModule,
     AnnouncementsModule,
     VotesModule,
+    SeedModule,
   ],
 })
 export class AppModule {}

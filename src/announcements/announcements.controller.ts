@@ -2,87 +2,57 @@ import {
   Controller,
   Get,
   Post,
-  Patch,
   Delete,
   Param,
-  Query,
   Body,
   Req,
   UseGuards,
-  NotImplementedException,
 } from '@nestjs/common';
-import {
-  ApiTags,
-  ApiOperation,
-  ApiBearerAuth,
-  ApiQuery,
-} from '@nestjs/swagger';
+import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AnnouncementsService } from './announcements.service';
 import { CreateAnnouncementDto } from './dto/create-announcement.dto';
-import { UpdateAnnouncementDto } from './dto/update-announcement.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../common/enums/role.enum';
 
-@ApiTags('Announcements (Protest-Scoped)')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@ApiTags('Announcements (Annonce)')
 @Controller('announcements')
 export class AnnouncementsController {
   constructor(private readonly announcementsService: AnnouncementsService) {}
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ORGANIZER, UserRole.MEDIC)
   @ApiOperation({
     summary:
-      'Create a new announcement for a protest (ONLY the organizer of that protest)',
+      'Broadcast a new announcement to protesters (Organizer or Medic only; optional lat/lng pins it to the map)',
   })
   create(
     @Req() req: any,
     @Body() createAnnouncementDto: CreateAnnouncementDto,
   ) {
-    // TODO: Wire up to announcementsService.create(req.user.userId, createAnnouncementDto)
-    throw new NotImplementedException('POST /api/announcements not implemented');
+    return this.announcementsService.create(createAnnouncementDto, req.user);
   }
 
   @Get()
-  @ApiQuery({
-    name: 'manifestationId',
-    required: true,
-    description: 'ID of the protest/manifestation the user belongs to',
-  })
+  @ApiBearerAuth()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
-    summary:
-      'Get announcements ONLY for the specified protest (must belong to the protest)',
+    summary: "Get feed of announcements for the user's protest, newest first",
   })
-  findByManifestation(
-    @Query('manifestationId') manifestationId: string,
-    @Req() req: any,
-  ) {
-    // TODO: Wire up to announcementsService.findByManifestation(manifestationId, req.user.userId)
-    throw new NotImplementedException('GET /api/announcements not implemented');
-  }
-
-  @Patch(':id')
-  @ApiOperation({
-    summary: 'Modify an announcement (ONLY the organizer of that protest)',
-  })
-  update(
-    @Param('id') id: string,
-    @Req() req: any,
-    @Body() updateAnnouncementDto: UpdateAnnouncementDto,
-  ) {
-    // TODO: Wire up to announcementsService.update(id, req.user.userId, updateAnnouncementDto)
-    throw new NotImplementedException(
-      'PATCH /api/announcements/:id not implemented',
-    );
+  findAll(@Req() req: any) {
+    return this.announcementsService.findAll(req.user);
   }
 
   @Delete(':id')
-  @ApiOperation({
-    summary: 'Delete an announcement (ONLY the organizer of that protest)',
-  })
-  remove(@Param('id') id: string, @Req() req: any) {
-    // TODO: Wire up to announcementsService.remove(id, req.user.userId)
-    throw new NotImplementedException(
-      'DELETE /api/announcements/:id not implemented',
-    );
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ORGANIZER)
+  @ApiOperation({ summary: 'Delete an outdated announcement (Organizer only)' })
+  remove(@Param('id') id: string) {
+    return this.announcementsService.remove(id);
   }
 }

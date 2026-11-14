@@ -16,11 +16,11 @@ export class Announcement {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  manifestationId: string;
-
   @Column({ nullable: true })
   authorId: string;
+
+  @Column({ nullable: true })
+  manifestationId: string;
 
   @Column()
   title: string;

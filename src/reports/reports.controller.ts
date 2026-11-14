@@ -3,15 +3,13 @@ import {
   Get,
   Post,
   Patch,
-  Delete,
   Param,
-  Query,
   Body,
   Req,
   UploadedFile,
   UseInterceptors,
   UseGuards,
-  NotImplementedException,
+  BadRequestException,
 } from '@nestjs/common';
 import { FileInterceptor } from '@nestjs/platform-express';
 import {
@@ -20,7 +18,6 @@ import {
   ApiConsumes,
   ApiBody,
   ApiBearerAuth,
-  ApiQuery,
 } from '@nestjs/swagger';
 import { diskStorage } from 'multer';
 import { extname } from 'path';
@@ -28,29 +25,34 @@ import { randomUUID } from 'crypto';
 import { ReportsService } from './reports.service';
 import { CreateReportDto } from './dto/create-report.dto';
 import { VerifyReportDto } from './dto/verify-report.dto';
+import { VerifyManyReportsDto } from './dto/verify-many-reports.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from '../auth/guards/optional-jwt-auth.guard';
+import { RolesGuard } from '../common/guards/roles.guard';
+import { Roles } from '../common/decorators/roles.decorator';
+import { UserRole } from '../common/enums/role.enum';
 
-@ApiTags('HeatMap & Urgence Reports (Protest-Scoped)')
-@ApiBearerAuth()
-@UseGuards(JwtAuthGuard)
+@ApiTags('HeatMap & Urgence Reports')
 @Controller('reports')
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 
   @Post()
+  @ApiBearerAuth()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
     summary:
-      'Submit status / Urgence button for a protest (current location, danger level, optional photo proof)',
+      'Submit status / Urgence button (current location, danger level, optional photo proof; max 5MB image/*)',
   })
   @ApiConsumes('multipart/form-data')
   @ApiBody({
     schema: {
       type: 'object',
-      required: ['manifestationId', 'lat', 'lng', 'dangerLevel'],
+      required: ['lat', 'lng', 'dangerLevel'],
       properties: {
-        manifestationId: { type: 'string', example: 'manifestation-uuid-123' },
-        lat: { type: 'number', example: 45.5017 },
-        lng: { type: 'number', example: -73.5673 },
+        userId: { type: 'string' },
+        lat: { type: 'number', example: 45.551 },
+        lng: { type: 'number', example: -73.549 },
         dangerLevel: { type: 'integer', minimum: 1, maximum: 5, example: 5 },
         description: { type: 'string' },
         photo: { type: 'string', format: 'binary' },
@@ -59,6 +61,18 @@ export class ReportsController {
   })
   @UseInterceptors(
     FileInterceptor('photo', {
+      limits: {
+        fileSize: 5 * 1024 * 1024, // 5 MB limit
+      },
+      fileFilter: (_req, file, cb) => {
+        if (!file.mimetype || !file.mimetype.startsWith('image/')) {
+          return cb(
+            new BadRequestException('Only image/* files are allowed'),
+            false,
+          );
+        }
+        cb(null, true);
+      },
       storage: diskStorage({
         destination: './uploads',
         filename: (_req, file, cb) => {
@@ -73,91 +87,71 @@ export class ReportsController {
     @Body() createReportDto: CreateReportDto,
     @UploadedFile() photo?: Express.Multer.File,
   ) {
-    // TODO: Wire up to reportsService.create(req.user.userId, createReportDto, photo?.filename)
-    throw new NotImplementedException('POST /api/reports not implemented');
+    return this.reportsService.create(
+      createReportDto,
+      photo?.filename,
+      req.user,
+    );
   }
 
   @Get()
-  @ApiQuery({
-    name: 'manifestationId',
-    required: true,
-    description: 'ID of the protest/manifestation the user belongs to',
-  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ORGANIZER)
   @ApiOperation({
-    summary: 'Get reports ONLY for the specified protest (must belong to it)',
+    summary: 'Get all reports for the protest (Organizer only)',
   })
-  findByManifestation(
-    @Query('manifestationId') manifestationId: string,
-    @Req() req: any,
-  ) {
-    // TODO: Wire up to reportsService.findByManifestation(manifestationId, req.user.userId)
-    throw new NotImplementedException('GET /api/reports not implemented');
+  findAll(@Req() req: any) {
+    return this.reportsService.findAll(req.user);
   }
 
   @Get('heatmap')
-  @ApiQuery({
-    name: 'manifestationId',
-    required: true,
-    description: 'ID of the protest/manifestation the user belongs to',
-  })
+  @ApiBearerAuth()
+  @UseGuards(OptionalJwtAuthGuard)
   @ApiOperation({
     summary:
-      'Get HeatMap points (lat, lng, dangerosity/pacificity level) ONLY for the specified protest',
+      'Get verified HeatMap points from the last 20 minutes (rounded to 3 decimals, no photoUrl/userId/description)',
   })
-  getHeatmapPoints(
-    @Query('manifestationId') manifestationId: string,
-    @Req() req: any,
-  ) {
-    // TODO: Wire up to reportsService.getHeatmapPoints(manifestationId, req.user.userId)
-    throw new NotImplementedException(
-      'GET /api/reports/heatmap not implemented',
-    );
+  getHeatmapPoints(@Req() req: any) {
+    return this.reportsService.getHeatmapPoints(req.user);
   }
 
   @Get('pending')
-  @ApiQuery({
-    name: 'manifestationId',
-    required: true,
-    description: 'ID of the protest/manifestation',
-  })
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ORGANIZER)
   @ApiOperation({
     summary:
-      'List pending urgency photo reports waiting for review (ONLY organizer of that protest)',
+      'List pending urgency photo reports from the last 15 minutes grouped by ~100m zone (Organizer only)',
   })
-  findPendingReview(
-    @Query('manifestationId') manifestationId: string,
-    @Req() req: any,
-  ) {
-    // TODO: Wire up to reportsService.findPendingReview(manifestationId, req.user.userId)
-    throw new NotImplementedException(
-      'GET /api/reports/pending not implemented',
-    );
+  findPendingReview(@Req() req: any) {
+    return this.reportsService.findPendingReview(req.user);
+  }
+
+  @Patch('verify-many')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ORGANIZER)
+  @ApiOperation({
+    summary:
+      'Verify or dismiss multiple reports in a zone at once and delete their photos from disk (Organizer only)',
+  })
+  verifyMany(@Body() verifyManyDto: VerifyManyReportsDto) {
+    return this.reportsService.verifyManyReports(verifyManyDto);
   }
 
   @Patch(':id/verify')
+  @ApiBearerAuth()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(UserRole.ORGANIZER)
   @ApiOperation({
     summary:
-      'Approve or dismiss an urgency photo report (ONLY organizer of that protest)',
+      'Organizer verifies or dismisses a single report and deletes its photo from disk',
   })
   verifyReport(
     @Param('id') id: string,
-    @Req() req: any,
     @Body() verifyReportDto: VerifyReportDto,
   ) {
-    // TODO: Wire up to reportsService.verifyReport(id, req.user.userId, verifyReportDto)
-    throw new NotImplementedException(
-      'PATCH /api/reports/:id/verify not implemented',
-    );
-  }
-
-  @Delete(':id')
-  @ApiOperation({
-    summary: 'Delete a report (ONLY organizer of that protest)',
-  })
-  remove(@Param('id') id: string, @Req() req: any) {
-    // TODO: Wire up to reportsService.remove(id, req.user.userId)
-    throw new NotImplementedException(
-      'DELETE /api/reports/:id not implemented',
-    );
+    return this.reportsService.verifyReport(id, verifyReportDto);
   }
 }

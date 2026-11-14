@@ -3,10 +3,10 @@ import { IsNotEmpty, IsString } from 'class-validator';
 
 export class JoinManifestationDto {
   @ApiProperty({
-    example: 'MAIS-8492',
-    description: 'Token received by students via MIO on Omnivox',
+    example: 'CEGEP1',
+    description: '6-character protest join code received on MIO / Omnivox',
   })
   @IsString()
   @IsNotEmpty()
-  joinToken: string;
+  code: string;
 }

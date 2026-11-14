@@ -1,14 +1,14 @@
 import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { ROLES_KEY } from '../decorators/roles.decorator';
-import { ManifestationRole } from '../enums/role.enum';
+import { UserRole } from '../enums/role.enum';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
   constructor(private reflector: Reflector) {}
 
   canActivate(context: ExecutionContext): boolean {
-    const requiredRoles = this.reflector.getAllAndOverride<ManifestationRole[]>(
+    const requiredRoles = this.reflector.getAllAndOverride<UserRole[]>(
       ROLES_KEY,
       [context.getHandler(), context.getClass()],
     );
@@ -16,11 +16,18 @@ export class RolesGuard implements CanActivate {
       return true;
     }
 
-    // TODO: Verify user's ManifestationMember role (organizer | manifester) for the target manifestationId
     const request = context.switchToHttp().getRequest();
-    const roleHeader = request.headers['x-user-role'] as
-      | ManifestationRole
-      | undefined;
-    return roleHeader ? requiredRoles.includes(roleHeader) : true;
+    const jwtRole = request.user?.role as UserRole | undefined;
+    const headerRole =
+      process.env.NODE_ENV !== 'production'
+        ? (request.headers['x-user-role'] as UserRole | undefined)
+        : undefined;
+
+    const effectiveRole = jwtRole || headerRole;
+    if (!effectiveRole) {
+      return false;
+    }
+
+    return requiredRoles.includes(effectiveRole);
   }
 }

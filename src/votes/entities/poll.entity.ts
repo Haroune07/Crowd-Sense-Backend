@@ -10,7 +10,7 @@ export class Poll {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
+  @Column({ nullable: true })
   manifestationId: string;
 
   @Column()

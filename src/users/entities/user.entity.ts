@@ -4,6 +4,7 @@ import {
   Column,
   CreateDateColumn,
 } from 'typeorm';
+import { UserRole } from '../../common/enums/role.enum';
 
 @Entity('users')
 export class User {
@@ -18,6 +19,16 @@ export class User {
 
   @Column({ nullable: true, select: false })
   passwordHash: string;
+
+  @Column({
+    type: 'simple-enum',
+    enum: UserRole,
+    default: UserRole.PROTESTER,
+  })
+  role: UserRole;
+
+  @Column({ nullable: true })
+  manifestationId: string;
 
   @CreateDateColumn()
   createdAt: Date;

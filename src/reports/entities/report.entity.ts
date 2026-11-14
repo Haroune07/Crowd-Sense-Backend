@@ -16,11 +16,11 @@ export class Report {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @Column()
-  manifestationId: string;
-
   @Column({ nullable: true })
   userId: string;
+
+  @Column({ nullable: true })
+  manifestationId: string;
 
   @Column('float')
   lat: number;
@@ -29,7 +29,7 @@ export class Report {
   lng: number;
 
   /**
-   * 1 = Pacific / Safe
+   * 1 = Calm / Peaceful
    * 5 = High Danger / Urgence
    */
   @Column('int')
@@ -47,6 +47,9 @@ export class Report {
     default: ReportStatus.PENDING_REVIEW,
   })
   status: ReportStatus;
+
+  @Column({ type: 'datetime', nullable: true })
+  verifiedAt: Date | null;
 
   @CreateDateColumn()
   createdAt: Date;

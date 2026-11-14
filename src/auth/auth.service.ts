@@ -1,14 +1,16 @@
 import {
+  ConflictException,
   Injectable,
-  NotImplementedException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { OAuth2Client } from 'google-auth-library';
+import * as bcrypt from 'bcryptjs';
 import { UsersService } from '../users/users.service';
 import { User } from '../users/entities/user.entity';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { UserRole } from '../common/enums/role.enum';
 
 @Injectable()
 export class AuthService {
@@ -20,6 +22,56 @@ export class AuthService {
     private readonly jwtService: JwtService,
     private readonly usersService: UsersService,
   ) {}
+
+  async signTokenForUser(user: User): Promise<string> {
+    return this.jwtService.signAsync({
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      manifestationId: user.manifestationId ?? null,
+    });
+  }
+
+  async register(
+    registerDto: RegisterDto,
+  ): Promise<{ accessToken: string; user: User }> {
+    const existing = await this.usersService.findByEmail(registerDto.email);
+    if (existing) {
+      throw new ConflictException('Email is already registered');
+    }
+
+    const passwordHash = await bcrypt.hash(registerDto.password, 10);
+    // Security rule: ignore incoming role and always register as PROTESTER
+    const user = await this.usersService.createWithPassword({
+      displayName: registerDto.displayName,
+      email: registerDto.email,
+      passwordHash,
+      role: UserRole.PROTESTER,
+    });
+
+    const accessToken = await this.signTokenForUser(user);
+    return { accessToken, user };
+  }
+
+  async login(
+    loginDto: LoginDto,
+  ): Promise<{ accessToken: string; user: User }> {
+    const user = await this.usersService.findByEmailWithPassword(
+      loginDto.email,
+    );
+    if (!user || !user.passwordHash) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    const isMatch = await bcrypt.compare(loginDto.password, user.passwordHash);
+    if (!isMatch) {
+      throw new UnauthorizedException('Invalid email or password');
+    }
+
+    delete user.passwordHash;
+    const accessToken = await this.signTokenForUser(user);
+    return { accessToken, user };
+  }
 
   async googleLogin(
     idToken: string,
@@ -49,24 +101,8 @@ export class AuthService {
       displayName: payload.name || payload.email.split('@')[0],
     });
 
-    const accessToken = await this.jwtService.signAsync({
-      sub: user.id,
-      email: user.email,
-    });
-
+    const accessToken = await this.signTokenForUser(user);
     return { accessToken, user };
-  }
-
-  async register(
-    registerDto: RegisterDto,
-  ): Promise<{ accessToken: string }> {
-    // TODO: Implement user registration, password hashing, and JWT signing
-    throw new NotImplementedException('AuthService.register not implemented');
-  }
-
-  async login(loginDto: LoginDto): Promise<{ accessToken: string }> {
-    // TODO: Implement credential verification and JWT signing via jwtService.signAsync()
-    throw new NotImplementedException('AuthService.login not implemented');
   }
 
   async getProfile(userId: string): Promise<User> {
