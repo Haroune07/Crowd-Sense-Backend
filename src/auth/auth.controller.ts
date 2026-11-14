@@ -11,12 +11,21 @@ import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { GoogleLoginDto } from './dto/google-login.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 
 @ApiTags('Auth (JWT)')
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
+
+  @Post('google')
+  @ApiOperation({
+    summary: 'Verify Google ID token from React and issue a Crowd-Sense JWT',
+  })
+  googleLogin(@Body() googleLoginDto: GoogleLoginDto) {
+    return this.authService.googleLogin(googleLoginDto.idToken);
+  }
 
   @Post('register')
   @ApiOperation({ summary: 'Register a new user and issue a JWT' })
@@ -37,7 +46,6 @@ export class AuthController {
   @ApiBearerAuth()
   @ApiOperation({ summary: 'Get current authenticated user from JWT' })
   getProfile(@Req() req: any) {
-    // TODO: Wire up to authService.getProfile(req.user.userId)
-    throw new NotImplementedException('GET /api/auth/me not implemented');
+    return this.authService.getProfile(req.user.userId);
   }
 }

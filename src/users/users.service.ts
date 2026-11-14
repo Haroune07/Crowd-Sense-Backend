@@ -1,4 +1,8 @@
-import { Injectable, NotImplementedException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  NotImplementedException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './entities/user.entity';
@@ -23,8 +27,28 @@ export class UsersService {
   }
 
   async findOne(id: string): Promise<User> {
-    // TODO: Implement fetching single user by id
-    throw new NotImplementedException('UsersService.findOne not implemented');
+    const user = await this.usersRepository.findOne({ where: { id } });
+    if (!user) {
+      throw new NotFoundException(`User ${id} not found`);
+    }
+    return user;
+  }
+
+  async findOrCreateGoogleUser(data: {
+    email: string;
+    displayName: string;
+  }): Promise<User> {
+    let user = await this.usersRepository.findOne({
+      where: { email: data.email },
+    });
+    if (!user) {
+      user = this.usersRepository.create({
+        email: data.email,
+        displayName: data.displayName,
+      });
+      user = await this.usersRepository.save(user);
+    }
+    return user;
   }
 
   async updateRole(id: string, updateRoleDto: UpdateRoleDto): Promise<User> {
