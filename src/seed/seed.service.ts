@@ -137,13 +137,13 @@ export class SeedService implements OnModuleInit {
           status: ReportStatus.VERIFIED,
           verifiedAt: now,
         },
-        // Tension / hot zone ahead (orange/red)
+        // Tension / hot zone ahead (3 = heated, 4 = danger)
         {
           manifestationId: manifestation.id,
           userId: organizer.id,
           lat: 45.509,
           lng: -73.567,
-          dangerLevel: 4,
+          dangerLevel: 3,
           status: ReportStatus.VERIFIED,
           verifiedAt: now,
         },
@@ -152,7 +152,7 @@ export class SeedService implements OnModuleInit {
           userId: organizer.id,
           lat: 45.508,
           lng: -73.568,
-          dangerLevel: 5,
+          dangerLevel: 4,
           status: ReportStatus.VERIFIED,
           verifiedAt: now,
         },
@@ -161,7 +161,7 @@ export class SeedService implements OnModuleInit {
           userId: organizer.id,
           lat: 45.5082,
           lng: -73.5681,
-          dangerLevel: 5,
+          dangerLevel: 4,
           status: ReportStatus.VERIFIED,
           verifiedAt: now,
         },

@@ -29,8 +29,7 @@ export class Report {
   lng: number;
 
   /**
-   * 1 = Calm / Peaceful
-   * 5 = High Danger / Urgence
+   * 1 = calm, 2 = tense, 3 = heated, 4 = danger
    */
   @Column('int')
   dangerLevel: number;
