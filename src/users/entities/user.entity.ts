@@ -14,6 +14,12 @@ export class User {
   @Column()
   displayName: string;
 
+  @Column({ unique: true, nullable: true })
+  email: string;
+
+  @Column({ nullable: true, select: false })
+  passwordHash: string;
+
   @Column({
     type: 'simple-enum',
     enum: UserRole,

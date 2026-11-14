@@ -23,6 +23,7 @@ async function bootstrap() {
       'Backend API for protest safety heatmap, urgency photo reports, announcements, roles, and polls.',
     )
     .setVersion('1.0')
+    .addBearerAuth()
     .addGlobalParameters({
       name: 'x-user-role',
       in: 'header',
