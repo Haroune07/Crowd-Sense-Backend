@@ -1,6 +1,7 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsInt,
+  IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
@@ -9,10 +10,13 @@ import {
 } from 'class-validator';
 
 export class CreateReportDto {
-  @ApiPropertyOptional({ example: 'user-uuid-123' })
-  @IsOptional()
+  @ApiProperty({
+    example: 'manifestation-uuid-123',
+    description: 'The protest/manifestation this status report belongs to',
+  })
   @IsString()
-  userId?: string;
+  @IsNotEmpty()
+  manifestationId: string;
 
   @ApiProperty({ example: 45.5017, description: 'Latitude' })
   @IsNumber()
