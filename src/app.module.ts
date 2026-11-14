@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
+import { existsSync } from 'fs';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { ManifestationsModule } from './manifestations/manifestations.module';
@@ -18,10 +19,17 @@ import { SeedModule } from './seed/seed.module';
       autoLoadEntities: true,
       synchronize: true,
     }),
-    ServeStaticModule.forRoot({
-      rootPath: join(__dirname, '..', 'uploads'),
-      serveRoot: '/uploads',
-    }),
+    ServeStaticModule.forRoot(
+      {
+        rootPath: join(__dirname, '..', 'uploads'),
+        serveRoot: '/uploads',
+      },
+      // The built frontend (copied to ./public by the Docker image), so one link serves the whole app.
+      // Every other path returns index.html, so pages like /map work after a refresh.
+      ...(existsSync(join(__dirname, '..', 'public'))
+        ? [{ rootPath: join(__dirname, '..', 'public'), exclude: ['/api/(.*)', '/uploads/(.*)'] }]
+        : []),
+    ),
     UsersModule,
     AuthModule,
     ManifestationsModule,
